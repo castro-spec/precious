@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Our Family Gallery</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #fdf6ee; --bg2: #f5ede0; --bg3: #ede0cc;
+    --text: #4a3728; --text-muted: #9a8070; --text-dim: #c0a898;
+    --accent: #c17f4a; --accent-light: #d4a070;
+    --border: rgba(160, 110, 70, 0.12); --white: #fffaf4;
+  }
+
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Lato', sans-serif; font-weight: 300;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  header {
+    background: var(--white); border-bottom: 1px solid var(--border);
+    padding: 2rem 3rem 1.8rem; text-align: center; position: relative;
+  }
+  .header-deco { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 0.6rem; }
+  .deco-line { width: 50px; height: 1px; background: var(--accent-light); opacity: 0.5; }
+  .deco-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-light); opacity: 0.6; }
+  .site-title {
+    font-family: 'Playfair Display', serif; font-size: clamp(32px, 5vw, 52px);
+    font-weight: 400; color: var(--text); letter-spacing: 0.01em; line-height: 1.1;
+  }
+  .site-title em { font-style: italic; color: var(--accent); }
+  .site-subtitle {
+    font-size: 12px; font-weight: 300; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--text-dim); margin-top: 0.5rem;
+  }
+
+  /* Gallery */
+  .gallery-wrap { padding: 3rem; max-width: 1400px; margin: 0 auto; }
+  .masonry { columns: 4; column-gap: 14px; }
+  @media (max-width: 1100px) { .masonry { columns: 3; } }
+  @media (max-width: 750px)  { .masonry { columns: 2; } }
+  @media (max-width: 480px)  {
+    .masonry { columns: 1; } .gallery-wrap { padding: 1.5rem; } header { padding: 1.5rem; }
+  }
+
+  .gallery-item {
+    break-inside: avoid; margin-bottom: 14px; position: relative;
+    overflow: hidden; border-radius: 4px; cursor: pointer;
+    box-shadow: 0 2px 12px rgba(160,110,70,0.08);
+    transition: box-shadow 0.3s, transform 0.3s;
+    animation: fadeUp 0.5s ease both;
+  }
+  .gallery-item:hover { box-shadow: 0 8px 28px rgba(160,110,70,0.18); transform: translateY(-2px); }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+  .gallery-item img, .gallery-item video {
+    width: 100%; display: block;
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.4s;
+    filter: saturate(0.95) brightness(0.97);
+    object-fit: cover;
+  }
+  .gallery-item:hover img, .gallery-item:hover video {
+    transform: scale(1.04); filter: saturate(1.05) brightness(1.02);
+  }
+
+  .item-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 2.5rem 1rem 1rem;
+    background: linear-gradient(to top, rgba(74,55,40,0.72) 0%, transparent 100%);
+    opacity: 0; transition: opacity 0.35s; pointer-events: none;
+  }
+  .gallery-item:hover .item-overlay { opacity: 1; }
+  .item-caption {
+    font-family: 'Playfair Display', serif; font-size: 15px; font-style: italic;
+    color: #fdf6ee; line-height: 1.3;
+  }
+  .item-date {
+    font-size: 10px; color: rgba(253,246,238,0.7);
+    letter-spacing: 0.12em; margin-top: 3px; text-transform: uppercase;
+  }
+
+  .video-badge {
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(193,127,74,0.9); color: #fff;
+    font-size: 10px; padding: 4px 8px; border-radius: 3px;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    pointer-events: none;
+  }
+
+  .add-hint {
+    text-align: center; padding: 1.5rem 3rem 3rem;
+    font-size: 12px; color: var(--text-dim); letter-spacing: 0.08em;
+  }
+  .add-hint strong { font-weight: 400; color: var(--accent); }
+
+  /* Lightbox */
+  .lightbox {
+    display: none; position: fixed; inset: 0;
+    background: rgba(30,18,10,0.96); z-index: 500;
+    align-items: center; justify-content: center; padding: 1.5rem;
+    animation: lbFade 0.25s ease;
+  }
+  @keyframes lbFade { from { opacity: 0; } to { opacity: 1; } }
+  .lightbox.open { display: flex; }
+
+  .lb-inner {
+    position: relative; max-width: 960px; width: 100%;
+    display: flex; flex-direction: column; align-items: center; gap: 1.2rem;
+  }
+
+  .lb-img-wrap {
+    width: 100%; display: flex; justify-content: center;
+    min-height: 60vh;
+  }
+
+  .lb-img-wrap img, .lb-img-wrap video {
+    max-height: 78vh; max-width: 100%;
+    object-fit: contain; border-radius: 3px; display: block;
+    transition: opacity 0.25s;
+  }
+
+  .lb-caption-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 2rem; width: 100%;
+  }
+  .lb-caption { text-align: center; }
+  .lb-title {
+    font-family: 'Playfair Display', serif; font-size: 20px;
+    font-style: italic; font-weight: 400; color: #fdf6ee;
+  }
+  .lb-date {
+    font-size: 11px; color: rgba(253,246,238,0.45);
+    letter-spacing: 0.16em; text-transform: uppercase; margin-top: 4px;
+  }
+  .lb-counter {
+    position: absolute; top: -2.8rem; left: 0;
+    font-size: 11px; color: rgba(253,246,238,0.35);
+    letter-spacing: 0.16em;
+  }
+
+  .lb-close {
+    position: fixed; top: 1.5rem; right: 1.8rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(253,246,238,0.6);
+    font-size: 20px; width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+    font-family: 'Lato', sans-serif; line-height: 1;
+  }
+  .lb-close:hover {
+    background: rgba(193,127,74,0.2);
+    border-color: rgba(193,127,74,0.5); color: #fdf6ee;
+  }
+
+  .lb-nav {
+    position: fixed; top: 50%; transform: translateY(-50%);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(253,246,238,0.5);
+    width: 46px; height: 46px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px; transition: all 0.2s;
+  }
+  .lb-nav:hover {
+    background: rgba(193,127,74,0.18);
+    border-color: rgba(193,127,74,0.45); color: #fdf6ee;
+  }
+  .lb-prev { left: 1.2rem; }
+  .lb-next { right: 1.2rem; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.8rem 3rem; text-align: center;
+  }
+  .footer-text {
+    font-family: 'Playfair Display', serif; font-style: italic;
+    font-size: 14px; color: var(--text-dim);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-deco">
+    <div class="deco-line"></div>
+    <div class="deco-dot"></div>
+    <div class="deco-line"></div>
+  </div>
+  <h1 class="site-title"><em>Empress'</em> Gallery</h1>
+  <p class="site-subtitle">Memories worth keeping</p>
+</header>
+
+<div class="gallery-wrap">
+  <div class="masonry" id="gallery-grid"></div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightboxOnBg(event)">
+  <button class="lb-nav lb-prev" onclick="navigateLb(-1)">&#8592;</button>
+  <button class="lb-nav lb-next" onclick="navigateLb(1)">&#8594;</button>
+  <button class="lb-close" onclick="closeLightbox()">&#215;</button>
+  <div class="lb-inner">
+    <span class="lb-counter" id="lb-counter"></span>
+    <div class="lb-img-wrap" id="lb-media-container">
+      <!-- Media (img/video) injected here -->
+    </div>
+    <div class="lb-caption">
+      <p class="lb-title" id="lb-title"></p>
+      <p class="lb-date" id="lb-date"></p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p class="footer-text">Made with love &hearts;</p>
+</footer>
+
+<script>
+  // =====================================================================
+  //  ADD YOUR FAMILY PHOTOS & VIDEOS HERE
+  // =====================================================================
+  const PHOTOS = [
+    { img: "assets/1.jpeg", caption: "Just before shower", date: "March 2026" },
+    { img: "assets/2.jpeg", caption: "very clean girl", date: "December 2025" },
+    { img: "assets/3.jpeg", caption: "", date: "August 2025" },
+    { img: "assets/4.jpeg", caption: "pretty face", date: "July 2025" },
+    { img: "assets/5.jpeg", caption: "Flying kisses", date: "May 2025" },
+    { img: "assets/6.jpeg", caption: "very innocent", date: "January 2026" },
+    { img: "assets/7.jpeg", caption: "smartness", date: "February 2026" },
+    
+    // 🎥 VIDEO EXAMPLE:
+    {
+      type: "video",
+      video: "assets/video1.mp4",
+      poster: "assets/7.jpeg", // thumbnail shown before play
+      caption: "smartness",
+      date: "February 2026"
+    },
+     {
+      type: "video",
+      video: "assets/video2.mp4",
+      poster: "assets/8.jpeg", // thumbnail shown before play
+      caption: "featuring the developer",
+      date: "February 2026"
+    }
+    
+  ];
+  // =====================================================================
+
+  let currentIndex = 0;
+
+  // Helper: Check if item is a video
+  function isVideo(item) {
+    return item.type === "video" || item.video;
+  }
+
+  function renderGallery() {
+    const grid = document.getElementById('gallery-grid');
+    grid.innerHTML = PHOTOS.map((p, i) => {
+      const isVid = isVideo(p);
+      return `
+      <div class="gallery-item" style="animation-delay:${i * 0.05}s" onclick="openLightbox(${i})">
+        ${isVid ? `
+          <video src="${p.video}" poster="${p.poster || ''}" muted loop playsinline></video>
+          <div class="video-badge">▶ Video</div>
+        ` : `<img src="${p.img}" alt="${p.caption}" loading="lazy" />`}
+        <div class="item-overlay">
+          <p class="item-caption">${p.caption}</p>
+          ${p.date ? `<p class="item-date">${p.date}</p>` : ''}
+        </div>
+      </div>
+    `}).join('');
+  }
+
+  function openLightbox(idx) {
+    currentIndex = idx;
+    updateLightbox();
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function updateLightbox() {
+    const p = PHOTOS[currentIndex];
+    const container = document.getElementById('lb-media-container');
+    container.innerHTML = ''; // Clear previous media
+
+    if (isVideo(p)) {
+      // Create video element for lightbox
+      const video = document.createElement('video');
+      video.src = p.video;
+      video.poster = p.poster || '';
+      video.controls = true;
+      video.autoplay = true;
+      video.style.maxHeight = '78vh';
+      video.style.maxWidth = '100%';
+      video.style.objectFit = 'contain';
+      video.style.borderRadius = '3px';
+      video.style.opacity = '0';
+      video.onloadeddata = () => { video.style.opacity = '1'; };
+      container.appendChild(video);
+    } else {
+      // Create image element for lightbox
+      const img = document.createElement('img');
+      img.src = p.img;
+      img.alt = p.caption;
+      img.style.opacity = '0';
+      img.onload = () => { img.style.opacity = '1'; };
+      container.appendChild(img);
+    }
+
+    document.getElementById('lb-title').textContent = p.caption;
+    document.getElementById('lb-date').textContent = p.date || '';
+    document.getElementById('lb-counter').textContent =
+      String(currentIndex + 1).padStart(2,'0') + ' / ' + String(PHOTOS.length).padStart(2,'0');
+  }
+
+  function closeLightbox() {
+    // Pause any playing video before closing
+    const container = document.getElementById('lb-media-container');
+    const video = container.querySelector('video');
+    if (video) {
+      video.pause();
+      video.currentTime = 0;
+    }
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function closeLightboxOnBg(e) {
+    if (e.target.id === 'lightbox') closeLightbox();
+  }
+
+  function navigateLb(dir) {
+    // Pause video before navigating
+    const container = document.getElementById('lb-media-container');
+    const video = container.querySelector('video');
+    if (video) video.pause();
+    
+    currentIndex = (currentIndex + dir + PHOTOS.length) % PHOTOS.length;
+    updateLightbox();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('lightbox').classList.contains('open')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowRight') navigateLb(1);
+    if (e.key === 'ArrowLeft') navigateLb(-1);
+  });
+
+  // Initialize
+  renderGallery();
+</script>
+</body>
+</html>
